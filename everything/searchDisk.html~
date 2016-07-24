@@ -1,0 +1,150 @@
+<!DOCTYPE html charset='shift-js'>
+<head>
+	<script type="text/javascript" src="http://ajax.googleapis.com/ajax/libs/jquery/1.11.0/jquery.min.js"></script>
+	<script type="text/javascript" src="http://cdnjs.cloudflare.com/ajax/libs/knockout/3.1.0/knockout-min.js"></script>
+	<script type="text/javascript" src="http://cdnjs.cloudflare.com/ajax/libs/knockout.mapping/2.4.1/knockout.mapping.js"></script>
+</head>
+<style type="text/css">
+div.filelist {
+	width: 500px;
+	height: 500px;
+	float: left;
+}
+div.imgpreview{
+	width: 800px;
+	height: 800px;
+	
+
+}
+</style>
+<html>
+<body>
+
+<h1>salesforce test page</h1>
+<input type="text" data-bind="value : item" id="fileNameKey"/>
+<input type="button" value="search in disk" data-bind="click : search" id="search" />
+
+<div class="content">
+	
+	<div class="filelist">
+		
+		<!-- ko if: searchresult.totalResults() > maxresult -->
+			<span data-bind="html : searchresult.title()"></span>
+		<!-- /ko -->
+		<div data-bind="visible : searchresult.totalResults() <= maxresult ">
+			<table >
+				<th data-bind="html:searchresult.title() + ':' + searchresult.totalResults()+ 'file(s)'">
+				</th>
+				<tbody>
+				<!-- ko foreach:searchresult.results -->
+				<tr data-bind="event:{click : $root.onhover($data.path(), $data.name())}">
+					<td>
+					<span data-bind="html: $data.name() + '<br/>'"></span>
+					</td>
+				</tr>
+				<!-- /ko -->
+				</tbody>
+			</table>
+		</div>
+		
+	</div>
+	<div class="imgpreview" style="float:left">
+<!-- comment  ko if: fileType($data.name(), pictype)  -->
+			
+				
+				<img data-bind="attr :{'src' :  imgUrisrc}"></img>
+				
+				 
+	</div>
+
+</div>
+<!-- You must put the script under the html code ,or it wont run correctly-->
+<!-- TODO
+	#1 the escape process when japanese in file names
+	#2 make the page better looking
+	-->
+
+	<script type="text/javascript">
+	var pictype = ['jpg','jpeg','png','__bmp'];
+	var vidtype = ['rmvb','wmv','mkv','avi','divx','mp4'];
+	var srctype = ['java','cpp','py','php','js']
+	//var urlhead = "http://okcomputer/";
+	var urlhead = "http://vxlt22/";
+	var maxresult = 50;
+	
+	var defaultdata = {"totalResults":10000,"results":[{"type":"","name":"","path":""}],"title":""};
+	this.fileType = function(filename, arrayobject){
+		
+			if ($.isArray(arrayobject) == false) {
+				return false};
+			var fileSplit = filename.split(".");
+			var fileExtension = fileSplit[fileSplit.length - 1];
+		
+			if ($.inArray(fileExtension, arrayobject) != -1) 
+				return true;
+			return false;
+				
+	};
+
+	this.replaceImgUrl = function(oldPath, oldName) {
+			var imgUrisrc = urlhead + escape((oldPath + '/' + oldName).replace(/\\/g,'/'));
+			return imgUrisrc;
+	}
+
+	//********************//
+	//** KO MODEL
+	//********************//	
+	var SearchObjModel = function(){
+		var self = this;
+		self.item = ko.observable('btn_test');
+		// init the search result
+		self.searchresult = ko.mapping.fromJS(defaultdata);
+		self.imgUrisrc = ko.observable('');
+
+		//**********************
+		//search function
+		//**********************
+		this.onhover = function(fPath, fName){
+			
+			if (fileType(fName, pictype)){
+				self.imgUrisrc(urlhead + escape((fPath + '/' + fName).replace(/\\/g,'/')));
+			}
+		};
+		this.search = function(){
+			var fileNameKey = $("input#fileNameKey").val();
+			console.log('fileNameKey',fileNameKey);
+			// send the Everything Http request	
+			$.ajax({
+				url : urlhead + "?search=" + fileNameKey + "&path_column=1&json=1",	
+				dataType: "json"	
+			}).success(function(data,textStatus){
+				ko.mapping.fromJS(data, self.searchresult);
+				if (data.totalResults <= maxresult){
+					self.searchresult.title("Search results");	
+				}else{
+					self.searchresult.title("Too many results.Search again");	
+				}
+				var htmlstr = "";
+				
+				$("div.cover").html(htmlstr);
+			}).error(function(){
+				console.log("error");
+			})	
+
+		};
+	}
+
+	$(function(){
+	});
+
+	kvm = new SearchObjModel();
+	ko.applyBindings(kvm);
+	//console.log(kvm.searchresult.totalResults);
+
+
+
+
+	</script>
+</body>
+</html>
+

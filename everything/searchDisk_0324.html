@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<head>
+	<script type="text/javascript" src="http://ajax.googleapis.com/ajax/libs/jquery/1.11.0/jquery.min.js"></script>
+	<script type="text/javascript" src="http://cdnjs.cloudflare.com/ajax/libs/knockout/3.1.0/knockout-min.js"></script>
+	<script type="text/javascript" src="http://cdnjs.cloudflare.com/ajax/libs/knockout.mapping/2.4.1/knockout.mapping.js"></script>
+	<script type="text/javascript">
+	var pictype = ['jpg','jpeg','png','__bmp'];
+	var vidtype = ['rmvb','wmv','mkv','avi','divx','mp4'];
+	var urlhead = "http://okcomputer/";
+	
+	/*
+	Farzher Neon
+	var searchobjModel = {
+		tag : ko.observable('')
+		,t : ko.observable(0) 
+		}
+	*/
+	function searchobjModel(){
+		var searchresult = {"totalResults":0,"results":[{"type":"none","name":"---","path":"---"}]};
+		var attachTag = function(){
+			console.log('attachTag function');
+		}
+
+		var deleteTag = function(){
+			// deletetag function
+		}
+
+	}
+	
+	
+	searchobjModel = ko.mapping.fromJS(searchresult);
+	
+	$(function(){
+		$("input#search").click(function(){
+			var fileNameKey = $("input#fileNameKey").val();
+			// send the Everything Http request	
+			$.ajax({
+				url : urlhead + "?search=" + fileNameKey + "&path_column=1&json=1",	
+				dataType: "json"	
+			}).success(function(data){
+				console.log("success!!");
+				ko.mapping.fromJS(data, searchobjModel);
+				var htmlstr = "";
+				console.log("total:" + searchobjModel.totalResults());
+				t =  searchobjModel.totalResults();
+				//console.log(searchobjModel.results()[0].name());
+				/*
+				for (var i = 0;i < data.results.length; i++) {
+					if (data.results[i].type != 'folder'){
+						var fileSplit = data.results[i].name.split(".");
+						var fileExtension = fileSplit[fileSplit.length - 1];
+						console.log(data.results[i].name, fileExtension);
+
+						if ($.inArray(fileExtension, pictype) != -1) { // 画像であれば
+							console.log("it is a picture");
+							var imgUri = "<img src='http://okcomputer/" + escape((data.results[i].path + '/' + data.results[i].name).replace(/\\/g,'/')) + "' >";
+
+							//htmlstr = htmlstr + imgUri +"<br/>";
+							htmlstr = htmlstr + data.results[i].name +"<br/>";
+							//htmlstr = escape(htmlstr);
+							console.log(htmlstr);
+						}
+					}
+				};
+				*/
+				
+				$("div.cover").html(htmlstr);
+
+			}).error(function(){
+				console.log("error");
+			})	
+
+		});
+
+		ko.applyBindings(searchobjModel);
+	})
+
+
+	</script>
+</head>
+<html>
+<body>
+
+<h1>salesforce test page</h1>
+<input type="text" value="job" id="fileNameKey"/>
+<input type="button" value="search in disk" id="search" />
+
+<div class="content">
+	<div class="cover">
+	<table border="1" >
+		<thead>
+			<span data-bind="text : 'Total: ' + searchobjModel.t()"></span>
+		</thead>
+		<tbody >
+		<tr data-bind="foreach: searchobjModel.results">
+		<td>
+			<span data-bind="text:$data.name"></span>
+		</td>
+		</tr>
+		</tbody>
+	</table>
+	</div>
+
+
+</div>
+
+</body>
+</html>

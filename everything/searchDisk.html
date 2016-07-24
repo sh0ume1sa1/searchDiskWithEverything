@@ -1,0 +1,257 @@
+<!DOCTYPE html charset='shift-js'>
+<head>
+	<script type="text/javascript" src="./jquery.min.js"></script>
+	<script type="text/javascript" src="./knockout-min.js"></script>
+	<script type="text/javascript" src="./knockout.mapping.js"></script>
+</head>
+<style type="text/css">
+div.filelist {
+	width: 500px;
+	height: 500px;
+	float: left;
+}
+div.imgpreview{
+	width: 800px;
+	height: 800px;
+	
+
+}
+.onselect{
+	background-color: #23332;
+}
+
+td.rowtd{
+	background-color: #99CCFF;/*cyan*/
+}
+#loading {
+	width: 30%;
+	height: 30%;
+	text-align: center;
+	/*padding: 20px; /* gif画像を大きく */
+	background: #ffffff; /* gif画像の背景色 */
+	opacity: 0.5; /* 透過させる */
+	/*border-radius: 15px; /* 丸角 */
+	position: fixed; /* gif画像をスクロールさせない */
+	left: 0;
+	top: 0;
+	z-index: 100;
+}
+
+
+
+
+</style>
+<script type="text/javascript">
+	$(function(){
+		console.log($().jquery);	// jquery version
+		/*
+		$("td.rowtdx").hover(
+			function(){
+				$(this).addClass('onselect');
+
+			},
+			function(){
+				$(this).removeClass('onselect');
+
+			}
+
+			);
+		*/
+		console.log($("td.rowtd").html());
+		$("td.rowtd").mouseover(function() {
+			/* Act on the event */
+			console.log('in ');
+		});
+		/*
+		(function() {
+			console.log('i am in');
+		}, function() {
+			console.log('i am out');
+		});
+	*/
+	});
+	</script>
+<html>
+<body>
+
+<h1>salesforce test page</h1>
+<input type="text" data-bind="value : item" id="searchStr"/>
+<input type="button" value="search in disk" data-bind="click : search" id="search" />
+<label>
+<input type="checkbox" data-bind="checked : searchimg" />
+search for image
+</label>
+<label>
+<input type="checkbox" data-bind="checked : searchvid" />
+Search for video
+</label>
+<div class="content">
+	
+	<div class="filelist"> 
+		
+		<!-- ko if: searchresult.totalResults() > maxresult -->
+			<div class="topinfo">
+			<span data-bind="html : searchresult.title() + '<br />'"></span>
+			
+			</div>
+
+		<!-- /ko -->
+		<div data-bind="visible : searchresult.totalResults() <= maxresult && searchresult.totalResults()>0">
+			<table >
+				<th data-bind="html:searchresult.title() + ':' + searchresult.totalResults()+ 'file(s)'  ">
+					
+				</th>
+				<tbody>
+					<tr>
+						<td colspan="2" style="width:100px" data-bind="html : selectfilename()"></td>
+					</tr>
+				<!-- ko foreach:searchresult.results -->
+				<tr class="row" data-bind="event:{mouseover : $root.onhover($data.path(), $data.name())}">
+					<td class="rowtd" >
+						<a data-bind="attr:{'href' : urlhead + encodeURIComponent($root.selectfilepath()) 
+							,'alt' : $root.selectfilepath()}">GO TO</a>
+					</td>
+					<td  >
+					<span data-bind="html: $data.name() "></span>
+					</td>
+				</tr>
+				<!-- /ko -->
+				</tbody>
+			</table>
+		</div>
+		
+	</div>
+	<div class="imgpreview" style="float:left">
+<!-- ko if: searchresult.totalResults() < maxresult  -->
+			
+				
+				<img data-bind="attr :{'src' :  imgUrisrc}"></img>
+			
+				
+<!-- /ko -->				 
+	</div>
+
+</div>
+<div id="loading"><img style="position: absolute; top: 45%; left: 45%;" src="./loading.gif"/></div>
+<!-- You must put the script under the html code ,or it wont run correctly-->
+<!-- TODO
+	#1 the escape process when japanese in file names
+	#2 make the page better looking
+	-->
+
+	<script type="text/javascript">
+	var pictype = ['jpg','jpeg','png','__bmp'];
+	var vidtype = ['rmvb','wmv','mkv','avi','divx','mp4'];
+	var srctype = ['java','cpp','py','php','js']
+	var urlhead = "http://okcomputer/";
+	//var urlhead = "http://vxlt22/";
+	var maxresult = 50;
+	
+	var defaultdata = {"totalResults":10000,"results":[{"type":"","name":"","path":""}],"title":""};
+	this.fileType = function(filename, arrayobject){
+		
+			if ($.isArray(arrayobject) == false) {
+				return false};
+			var fileSplit = filename.split(".");
+			var fileExtension = fileSplit[fileSplit.length - 1];
+		
+			if ($.inArray(fileExtension, arrayobject) != -1) 
+				return true;
+			return false;
+				
+	};
+
+	this.replaceImgUrl = function(oldPath, oldName) {
+			var imgUrisrc = urlhead + escape((oldPath + '/' + oldName).replace(/\\/g,'/'));
+			return imgUrisrc;
+	}
+
+	//********************//
+	//** KO MODEL
+	//********************//	
+	var SearchObjModel = function(){
+		var self = this;
+		self.item = ko.observable('job00');// btn_test
+		// init the search result
+		self.searchresult = ko.mapping.fromJS(defaultdata);
+		self.imgUrisrc = ko.observable('');
+		self.searchvid = ko.observable(false);
+		self.searchimg = ko.observable(true);
+		self.selectfilename = ko.observable('');
+		self.selectfilepath = ko.observable('');
+		//**********************
+		//search function
+		//**********************
+		this.onhover = function(fPath, fName){
+			self.selectfilepath(fPath);
+			self.selectfilename(fName);
+			
+			if (fileType(fName, pictype)){
+				self.imgUrisrc(urlhead + encodeURIComponent((fPath + '/' + fName).replace(/\\/g,'/')));
+			}
+		};
+		this.search = function(){
+			var searchStr = "";
+			
+			if (self.searchimg()){
+				pictype.forEach(function(value,index,array){
+					searchStr = searchStr + (index==0?'':'|') + $("input#searchStr").val() + '.*.' + value + '$';
+				});
+			}
+			if (self.searchvid()){
+				vidtype.forEach(function(value,index,array){
+					if (self.searchimg()){
+						searchStr = searchStr + '|' + $("input#searchStr").val() + '.*.' + value + '$';
+					}else{
+						searchStr = searchStr + (index==0?'':'|') + $("input#searchStr").val() + '.*.' + value + '$';	
+					}
+				});
+
+			};
+			if (self.searchimg() || self.searchvid()){
+				searchStr +='&regex=1';
+			}else{
+				searchStr +='TESTEST';	// can not search anything
+			}
+
+
+			console.log('searchStr=' + searchStr);
+				$("#loading").show();
+			// send the Everything Http request	
+			$.ajax({
+				url : urlhead + "?search=" + searchStr + "&path_column=1&json=1",	
+				dataType: "json"	
+			}).success(function(data,textStatus){
+					$("#loading").fadeOut('fast', function() {
+						
+					});
+				ko.mapping.fromJS(data, self.searchresult);
+				if (data.totalResults <= maxresult){
+					self.searchresult.title("Search results");	
+				}else{
+					self.searchresult.title("Too many results.Search again");	
+				}
+				
+			}).error(function(){
+				console.log("error");
+				$("#loading").fadeOut('400', function() {
+					
+				});
+			})	
+
+		};
+	};
+ 
+
+	kvm = new SearchObjModel();
+	ko.applyBindings(kvm);
+	$('#loading').hide();
+	//console.log(kvm.searchresult.totalResults);
+
+
+
+
+	</script>
+</body>
+</html>
+

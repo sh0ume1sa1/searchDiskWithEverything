@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<head>
+	
+</head>
+<html>
+<body>
+
+<h1>salesforce test page</h1>
+<input type="text" value="job" id="fileNameKey"/>
+<input type="button" value="search in disk" data-bind="click : search" id="search" />
+
+<div class="content">
+	<div class="cover">
+	<table border="1" >
+		<thead>
+			<span data-bind="html : searchresult.results()[0].name"></span>
+		</thead>
+		<tbody >
+		<tr data-bind="foreach: searchresult.results">
+		<td>
+			<span data-bind="text:$data.name"></span>
+		</td>
+		</tr>
+		</tbody>
+	</table>
+	</div>
+
+
+</div>
+
+<script type="text/javascript" src="http://ajax.googleapis.com/ajax/libs/jquery/1.11.0/jquery.min.js"></script>
+	<script type="text/javascript" src="http://cdnjs.cloudflare.com/ajax/libs/knockout/3.1.0/knockout-min.js"></script>
+	<script type="text/javascript" src="http://cdnjs.cloudflare.com/ajax/libs/knockout.mapping/2.4.1/knockout.mapping.js"></script>
+	<script type="text/javascript">
+	var pictype = ['jpg','jpeg','png','__bmp'];
+	var vidtype = ['rmvb','wmv','mkv','avi','divx','mp4'];
+	var urlhead = "http://okcomputer/";
+	//var urlhead = "http://vxlt22/";
+	
+	var defaultdata = {"totalResults":0,"results":[{"type":"none","name":"---","path":"---"}]};
+	//********************//
+	//** KO MODEL
+	//********************//	
+	var SearchObjModel = function(){
+		var self = this;
+		// init the search result
+		this.searchresult = ko.mapping.fromJS(defaultdata);
+		//**********************
+		//search function
+		//**********************
+		this.search = function(){
+			var fileNameKey = $("input#fileNameKey").val();
+			console.log('fileNameKey',fileNameKey);
+			// send the Everything Http request	
+			$.ajax({
+				url : urlhead + "?search=" + fileNameKey + "&path_column=1&json=1",	
+				dataType: "json"	
+			}).success(function(data){
+				console.log("success!!");
+				ko.mapping.fromJS(data, self.searchresult);
+				var htmlstr = "";
+				console.log("total:" + self.searchresult.totalResults());
+				//console.log(SearchObjModel.results()[0].name());
+				/*
+				for (var i = 0;i < data.results.length; i++) {
+					if (data.results[i].type != 'folder'){
+						var fileSplit = data.results[i].name.split(".");
+						var fileExtension = fileSplit[fileSplit.length - 1];
+						console.log(data.results[i].name, fileExtension);
+
+						if ($.inArray(fileExtension, pictype) != -1) { // 画像であれば
+							console.log("it is a picture");
+							var imgUri = "<img src='http://okcomputer/" + escape((data.results[i].path + '/' + data.results[i].name).replace(/\\/g,'/')) + "' >";
+
+							//htmlstr = htmlstr + imgUri +"<br/>";
+							htmlstr = htmlstr + data.results[i].name +"<br/>";
+							//htmlstr = escape(htmlstr);
+							console.log(htmlstr);
+						}
+					}
+				};
+				*/
+				
+				$("div.cover").html(htmlstr);
+
+			}).error(function(){
+				console.log("error");
+			})	
+
+		}
+		// todo attachTag
+		this.attachTag = function(){
+			console.log('attachTag function');
+		}
+		// todo delete Tag
+		this.deleteTag = function(){
+			// deletetag function
+		}
+
+	}
+	
+	
+	$(function(){
+	// document ready
+	});
+
+	kvm = new SearchObjModel();
+	ko.applyBindings(kvm);
+
+
+
+
+	</script>
+</body>
+</html>
